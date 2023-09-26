@@ -107,6 +107,7 @@ public:
 	void shiftNode(Hy3Node&, ShiftDirection, bool once, bool visible);
 	void shiftWindow(int workspace, ShiftDirection, bool once, bool visible);
 	void shiftFocus(int workspace, ShiftDirection, bool visible);
+	void shiftFocusMonitor(ShiftDirection direction);
 	void changeFocus(int workspace, FocusShift);
 	void focusTab(int workspace, TabFocus target, TabFocusMousePriority, bool wrap_scroll, int index);
 	void setNodeSwallow(int workspace, SetSwallowOption);

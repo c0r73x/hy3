@@ -923,11 +923,48 @@ void Hy3Layout::shiftFocus(int workspace, ShiftDirection direction, bool visible
 	auto* node = this->getWorkspaceFocusedNode(workspace);
 	if (node == nullptr) return;
 
-	Hy3Node* target;
-	if ((target = this->shiftOrGetFocus(*node, direction, false, false, visible))) {
+	Hy3Node* target = this->shiftOrGetFocus(*node, direction, false, false, visible);
+	if (target != nullptr) {
 		target->focus();
 		while (target->parent != nullptr) target = target->parent;
 		target->recalcSizePosRecursive();
+	} else if (target == node) {
+		shiftFocusMonitor(direction);
+	} else {
+		shiftFocusMonitor(direction);
+    }
+}
+
+void Hy3Layout::shiftFocusMonitor(ShiftDirection direction) {
+	char direction_str;
+	switch (direction) {
+		case ShiftDirection::Up:
+			direction_str = 'u';
+			break;
+		case ShiftDirection::Left:
+			direction_str = 'l';
+			break;
+		case ShiftDirection::Down:
+			direction_str = 'd';
+			break;
+		case ShiftDirection::Right:
+			direction_str = 'r';
+			break;
+	}
+
+	auto target = g_pCompositor->getMonitorInDirection(direction_str);
+
+	if(target != nullptr) {
+		g_pCompositor->setActiveMonitor(target);
+
+		auto target_center = target->vecPosition + target->vecSize / 2;
+		g_pCompositor->warpCursorTo(target_center);
+
+		// Focus
+		auto* target_node = getWorkspaceFocusedNode(target->activeWorkspace);
+		if (target_node != nullptr) {
+			target_node->focus();
+		}
 	}
 }
 
