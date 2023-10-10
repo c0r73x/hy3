@@ -742,7 +742,7 @@ void Hy3Layout::onEnable() {
 	HyprlandAPI::registerCallbackStatic(PHANDLE, "windowTitle", windowTitleHookPtr.get());
 	HyprlandAPI::registerCallbackStatic(PHANDLE, "urgent", urgentHookPtr.get());
 	HyprlandAPI::registerCallbackStatic(PHANDLE, "tick", tickHookPtr.get());
-	selection_hook::enable();
+	/* selection_hook::enable(); */
 }
 
 void Hy3Layout::onDisable() {
@@ -750,7 +750,7 @@ void Hy3Layout::onDisable() {
 	HyprlandAPI::unregisterCallback(PHANDLE, windowTitleHookPtr.get());
 	HyprlandAPI::unregisterCallback(PHANDLE, urgentHookPtr.get());
 	HyprlandAPI::unregisterCallback(PHANDLE, tickHookPtr.get());
-	selection_hook::disable();
+	/* selection_hook::disable(); */
 
 	for (auto& node: this->nodes) {
 		if (node.data.type == Hy3NodeType::Window) {
