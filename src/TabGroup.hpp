@@ -7,6 +7,7 @@ class Hy3TabBar;
 #include <memory>
 #include <vector>
 
+#include <hyprland/src/plugins/PluginAPI.hpp>
 #include <hyprland/src/render/Texture.hpp>
 
 #include "Hy3Node.hpp"
@@ -53,7 +54,7 @@ struct Hy3TabBarEntry {
 	void beginDestroy();
 	void unDestroy();
 	bool shouldRemove();
-	void prepareTexture(float, wlr_box&);
+	void prepareTexture(float, CBox&);
 };
 
 class Hy3TabBar {

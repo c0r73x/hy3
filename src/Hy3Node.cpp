@@ -1,10 +1,11 @@
 #include <sstream>
 
 #include <hyprland/src/Compositor.hpp>
+#include <hyprland/src/helpers/Box.hpp>
 #include <hyprland/src/plugins/PluginAPI.hpp>
 
-#include "globals.hpp"
 #include "Hy3Node.hpp"
+#include "globals.hpp"
 
 // Hy3GroupData //
 
@@ -272,6 +273,34 @@ void Hy3Node::recalcSizePosRecursive(bool no_animation) {
 	static const auto* tab_bar_padding = &HyprlandAPI::getConfigValue(PHANDLE, "plugin:hy3:tabs:padding")->intValue;
 	// clang-format on
 
+	if (this->data.type == Hy3NodeType::Window && this->data.as_window->m_bIsFullscreen) {
+		auto* workspace = g_pCompositor->getWorkspaceByID(this->workspace_id);
+		auto* monitor = g_pCompositor->getMonitorFromID(workspace->m_iMonitorID);
+
+		if (workspace->m_efFullscreenMode == FULLSCREEN_FULL) {
+			this->data.as_window->m_vRealPosition = monitor->vecPosition;
+			this->data.as_window->m_vRealSize = monitor->vecSize;
+			return;
+		}
+
+		int outer_gaps = -(*gaps_in - *gaps_out);
+
+		auto gap_topleft_offset = Vector2D(outer_gaps, outer_gaps);
+		auto gap_bottomright_offset = Vector2D(outer_gaps, outer_gaps);
+
+		Hy3Node fake_node = {
+		    .data = this->data.as_window,
+		    .position = monitor->vecPosition + monitor->vecReservedTopLeft,
+		    .size = monitor->vecSize - monitor->vecReservedTopLeft - monitor->vecReservedBottomRight,
+		    .gap_topleft_offset = gap_topleft_offset,
+		    .gap_bottomright_offset = gap_bottomright_offset,
+		    .workspace_id = this->workspace_id,
+		};
+
+		this->layout->applyNodeDataToWindow(&fake_node);
+		return;
+	}
+
 	int outer_gaps = 0;
 	Vector2D gap_topleft_offset;
 	Vector2D gap_bottomright_offset;
@@ -290,7 +319,7 @@ void Hy3Node::recalcSizePosRecursive(bool no_animation) {
 
 	double tab_height_offset = *tab_bar_height + *tab_bar_padding;
 
-	if (this->data.type != Hy3NodeType::Group) {
+	if (this->data.type == Hy3NodeType::Window) {
 		this->data.as_window->setHidden(this->hidden);
 		this->layout->applyNodeDataToWindow(this, no_animation);
 		return;
@@ -310,15 +339,14 @@ void Hy3Node::recalcSizePosRecursive(bool no_animation) {
 	}
 
 	auto expand_focused = group->expand_focused != ExpandFocusType::NotExpanded;
-	bool directly_contains_expanded
-	    = expand_focused
-	   && (group->focused_child->data.type == Hy3NodeType::Window
-	       || group->focused_child->data.as_group.expand_focused == ExpandFocusType::NotExpanded);
+	bool directly_contains_expanded =
+	    expand_focused
+	    && (group->focused_child->data.type == Hy3NodeType::Window
+	        || group->focused_child->data.as_group.expand_focused == ExpandFocusType::NotExpanded);
 
 	auto child_count = group->children.size();
-	double ratio_mul = group->layout != Hy3GroupLayout::Tabbed
-	                     ? child_count <= 0 ? 0 : constraint / child_count
-	                     : 0;
+	double ratio_mul =
+	    group->layout != Hy3GroupLayout::Tabbed ? child_count <= 0 ? 0 : constraint / child_count : 0;
 
 	double offset = 0;
 
@@ -327,7 +355,7 @@ void Hy3Node::recalcSizePosRecursive(bool no_animation) {
 	{
 		group->focused_child->setHidden(false);
 
-		auto box = wlr_box {tpos.x, tpos.y, tsize.x, tsize.y};
+		auto box = CBox {tpos.x, tpos.y, tsize.x, tsize.y};
 		g_pHyprRenderer->damageBox(&box);
 	}
 
@@ -435,8 +463,8 @@ void Hy3Node::recalcSizePosRecursive(bool no_animation) {
 			child->size = tsize;
 			child->hidden = this->hidden || expand_focused || group->focused_child != child;
 
-			child->gap_topleft_offset
-			    = Vector2D(gap_topleft_offset.x, gap_topleft_offset.y + tab_height_offset);
+			child->gap_topleft_offset =
+			    Vector2D(gap_topleft_offset.x, gap_topleft_offset.y + tab_height_offset);
 			child->gap_bottomright_offset = gap_bottomright_offset;
 
 			child->recalcSizePosRecursive(no_animation);
