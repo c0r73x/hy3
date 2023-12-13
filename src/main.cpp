@@ -15,21 +15,6 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
 	PHANDLE = handle;
 
 	selection_hook::init();
-#ifndef HY3_NO_VERSION_CHECK
-	if (GIT_COMMIT_HASH != std::string(__hyprland_api_get_hash())) {
-		HyprlandAPI::addNotification(
-		    PHANDLE,
-		    "[hy3] Hy3 was compiled for a different version of hyprland; refusing to start.",
-		    CColor {1.0, 0.2, 0.2, 1.0},
-		    10000
-		);
-
-		throw std::runtime_error("[hy3] target hyprland version mismatch");
-	}
-#endif
-
-	selection_hook::init();
->>>>>>> upstream/master
 
 #define CONF(NAME, TYPE, VALUE)                                                                    \
 	HyprlandAPI::addConfigValue(PHANDLE, "plugin:hy3:" NAME, SConfigValue {.TYPE##Value = VALUE})
